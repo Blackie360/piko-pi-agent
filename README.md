@@ -25,14 +25,14 @@ python -m pip install -r requirements.lock
 mkdir -p "$HOME/piko-workspace"
 export PI_AGENT_ALLOWED_ORIGINS='https://piko.example.com'
 export PI_AGENT_WORKSPACE="$HOME/piko-workspace"
-uvicorn app:app --host 127.0.0.1 --port 8765 --workers 1
+uvicorn backend.piko.app:app --host 127.0.0.1 --port 8765 --workers 1
 ```
 
 Replace the example origin with your exact private HTTPS dashboard origin, including its port if nonstandard. Proxy that origin to `127.0.0.1:8765`; do not bind the dashboard to a public interface. Session cookies remain Secure/HttpOnly. Configure HTTPS before signing in; plain HTTP is not a supported login setup.
 
-See `.env.example` for settings. The app does **not** automatically load `.env` files: export values in your shell or use your service manager's environment configuration. Do not commit real settings or secrets.
+See the single `.env.example` for core and optional WhatsApp settings. The app does **not** automatically load `.env` files: export values in your shell or use your service manager's environment configuration. Do not commit real settings or secrets.
 
-At first start, Piko creates a local `data/login-token`. Read that file **locally on your own host**, use the access code to sign in, then add your OpenAI API key through the private dashboard Settings. Do not paste the token or key into an issue or chat. `PI_AGENT_DATA` can select a different private runtime-data directory. Keep it outside version control and readable only by the service account. Back it up securely if you need to retain conversations.
+At first start, Piko creates a local `data/login-token` in the repository root. Read that file **locally on your own host**, use the access code to sign in, then add your OpenAI API key through the private dashboard Settings. Do not paste the token or key into an issue or chat. `PI_AGENT_DATA` can select a different private runtime-data directory. Keep it outside version control and readable only by the service account. Back it up securely if you need to retain conversations.
 
 ## Security and behavior
 
@@ -46,34 +46,52 @@ At first start, Piko creates a local `data/login-token`. Read that file **locall
 
 ## Optional WhatsApp
 
-WhatsApp is disabled by default. [WHATSAPP.md](WHATSAPP.md) contains public configuration guidance, approval behavior and integration limits. Configure your own provider account and verify the delivery contract before enabling processing. Webhook ingress must never expose the dashboard API. Nothing in this repository configures or deploys a live account.
+The adapter is disabled by default and is not needed for the dashboard. Its variables are grouped in the single `.env.example`. Replace placeholders locally and explicitly export the settings or configure your service manager; the app does not automatically read `.env`.
+
+Use your own provider account, dedicated credentials and explicitly authorized sender. Verify the provider's current webhook contract before enabling processing. The separate receiver in `receiver/pi_receiver.py` must never expose the dashboard API. It validates incoming events and passes authenticated messages to the private adapter; it is not a general public agent endpoint. Never commit real credentials, sender identities or provider payloads.
+
+**Credential modes are unchanged:** the Python receiver requires systemd credential mounts. The adapter also uses credential mounts when `CREDENTIALS_DIRECTORY` is present and will not fall back to environment secrets if a mount is missing. Its environment-secret variables are for non-systemd development only; putting them in `.env` is not a replacement for receiver credential mounts. Model credentials are still entered through the private dashboard, not the example file.
+
+Conversation command grants, fresh sudo approval, deduplication and uncertain-delivery handling remain in place. `EXIT` clears the conversation grant. Task cancellation does not undo completed commands. Corrections require one-use confirmation; do not automatically retry uncertain sends. Verify configuration with synthetic input before any authorized live messages.
+
+### Deployment boundaries
+
+- **Dashboard:** from the repository root run the Uvicorn command above, one process, loopback only behind private HTTPS.
+- **Python receiver:** `python receiver/pi_receiver.py`. The service template is `deploy/systemd/piko-webhook.service`; its example paths assume the repository is installed at `/opt/piko-pi-agent`. Review paths and configure your own credential mounts/environment before installation. Processing remains disabled by default.
+- **Vercel stub:** `deploy/vercel/` is a separate deployment root. Its webhook is intentionally fail-closed, not an active forwarding bridge. Moving these files does not enable or deploy anything.
+
+No real provider, reverse proxy, systemd deployment or audio hardware was configured by this refactor.
 
 ## Verification
 
-The test suite has been removed from the current branch at the maintainer's request. It remains recoverable from Git history and the immutable `v2.0.0` release. No automated CI is configured.
+The test suite has been removed from the current branch at the maintainer's request. It remains recoverable from Git history and the preserved `v2.0.0` release. No automated CI is configured.
 
 You can check source syntax without starting the application:
 
 ```sh
-python -m compileall -q app.py command_audit.py conversation_context.py whatsapp.py whatsapp_media.py whatsapp_summary.py public_receiver/pi_receiver.py
-node --check static/app.js
-node --check public_receiver/api/webhook.js
+python -m compileall -q backend receiver
+node --check frontend/assets/js/app.js
+node --check deploy/vercel/api/webhook.js
 ```
 
 Syntax checks are not runtime or integration tests. Validate HTTPS/authentication, command approvals, real-device audio and any messaging configuration in your own isolated deployment before use.
 
 ## Project layout
 
-- `app.py`: web API, coordinator, voice and approval orchestration
-- `command_audit.py`, `conversation_context.py`: local audit/history helpers
-- `static/`: no-build dashboard, fonts and icons
-- `whatsapp*.py`, `public_receiver/`: optional messaging integration
-- `README.md`, `WHATSAPP.md`: the two project guides
+```text
+backend/piko/        Python web app, configuration, agent, commands and voice
+  integrations/whatsapp/  Optional adapter, media and summaries
+frontend/           index.html and assets/{js,css,fonts,icons}
+receiver/           Independently deployed Python webhook receiver
+deploy/             systemd service and separate Vercel stub
+```
 
-This release intentionally keeps the existing flat code structure; a package refactor is not included.
+`backend/piko/app.py` is the web entrypoint. Audit/history helpers live beside it. The frontend remains plain HTML/CSS/JavaScript with no build step; the backend serves its assets at `/static`. Runtime data stays in root `data/` by default or the existing `PI_AGENT_DATA` override. This reorganization does not migrate, delete or publish runtime data.
+
+For an existing checkout, update its launch command and service paths before switching versions; keep the same explicit `PI_AGENT_DATA` path if your deployment uses one. Do not copy secrets into the repository. The `v2.0.0` tag is unchanged.
 
 ## Contributing and license
 
 Small, focused pull requests with clear verification steps are welcome. Do not include credentials, private hostnames, conversation exports or real webhook payloads. Experimental community project: no support SLA. For security concerns, avoid posting exploit details or secrets publicly; use GitHub's private vulnerability reporting when available.
 
-Project code is licensed under [MIT](LICENSE). Bundled fonts retain their separate SIL Open Font License notices in `static/fonts/OFL-*.txt`.
+Project code is licensed under [MIT](LICENSE). Bundled fonts retain their separate SIL Open Font License notices in `frontend/assets/fonts/OFL-*.txt`.

@@ -475,7 +475,7 @@ class WhatsAppAdapter:
         return dict(row)
 
     async def send_media(self, rid, file_path, media_type, caption, protected=(), secrets=()):
-        from whatsapp_media import snapshot, transmit, SECRET_CONTENT, MediaRejected, safe_transport_diagnostic
+        from .media import snapshot, transmit, SECRET_CONTENT, MediaRejected, safe_transport_diagnostic
         try:
             cfg = self.config()
             origin = self.media_origin(rid, cfg)

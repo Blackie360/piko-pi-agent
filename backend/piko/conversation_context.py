@@ -1,6 +1,6 @@
 """Bounded secret-aware history. This supplies context, never authorization."""
 import json
-from command_audit import sanitize
+from .command_audit import sanitize
 HISTORY_BYTES=12000
 SUMMARY_INPUT_BYTES=64000
 SUMMARY_BYTES=6000

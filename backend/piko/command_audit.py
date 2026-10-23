@@ -53,7 +53,7 @@ TEXT_EXT={'.py','.js','.ts','.tsx','.jsx','.css','.html','.md','.txt','.csv','.t
 
 
 def snapshot(scope,secrets=()):
-    from whatsapp_media import sensitive
+    from .integrations.whatsapp.media import sensitive
     result={};notes=[];total=0;visited=0;directories=0
     if not scope: return result,['No explicit audit workspace selected']
     root=Path(scope)
