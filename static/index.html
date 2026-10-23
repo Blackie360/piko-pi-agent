@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Piko</title>
+<meta name="description" content="Your home lab. One conversation. Manage your Pi with live voice, text chat, and a Tailscale device dashboard.">
+<meta name="theme-color" content="#f4f0e8">
+<link rel="icon" href="/static/favicon.ico?v=2" type="image/x-icon" sizes="16x16 32x32 48x48 64x64">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml" sizes="any">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Piko">
+<meta property="og:description" content="Your home lab. One conversation. Live voice, tasks, and devices.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Piko">
+<meta name="twitter:description" content="Your home lab. One conversation.">
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/markdown.js" defer></script>
+<script src="/static/voice-control.js" defer></script>
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+
+<div id="login" class="overlay">
+ <form id="loginForm" class="card">
+  <div class="brand"><span class="sigil" aria-hidden="true"></span>Piko</div>
+  <p class="loginContext">Your home lab, within reach.</p>
+  <h1>Mission control<br>for your Pi.</h1>
+  <p>Enter your access code to open the console.</p>
+  <label>Access code<input id="password" type="password" autocomplete="current-password" required></label>
+  <button>Open console</button>
+  <p id="loginError" class="error" role="alert"></p>
+ </form>
+</div>
+
+<div id="shell" hidden>
+ <aside id="rail">
+  <div class="brand"><span class="sigil" aria-hidden="true"></span>Piko</div>
+  <button id="newChat">＋ New mission<kbd>⌘K</kbd></button>
+  <div class="eyebrow">Mission log</div>
+  <nav id="chats" aria-label="Conversations"></nav>
+  <footer>
+   <div class="uplink"><span class="dot"></span>Pi host · Tailscale</div>
+   <div class="railNav">
+    <button id="devicesOpen" class="quiet">Devices</button>
+    <button id="metricsOpen" class="quiet">Dashboard</button>
+    <button id="settingsOpen" class="quiet">Settings</button>
+    <button id="logout" class="quiet">Sign out</button>
+   </div>
+  </footer>
+ </aside>
+ <div id="railScrim" aria-hidden="true"></div>
+
+ <main>
+  <header>
+   <button id="railToggle" type="button" class="quiet" aria-label="Open menu" aria-expanded="false">☰</button>
+   <div class="headTitle"><strong>Your workspace</strong><small>Tasks, troubleshooting, and projects on Pi host</small></div>
+   <div class="modelControls">
+    <label for="modelPicker">Model</label>
+    <select id="modelPicker" aria-label="Agent model"></select>
+    <label for="personaPicker">Tone</label><select id="personaPicker" aria-label="Assistant tone"></select>
+    <span id="status" class="badge" data-state="ready">Ready</span>
+   </div>
+  </header>
+  <div id="setupBanner" hidden>Connect OpenAI to start working. <button id="connect" class="quiet">Add API key →</button></div>
+
+  <div id="feed">
+   <section id="welcome">
+    <div class="welcomeMark" aria-hidden="true">π</div>
+    <h1>Your home lab.<br>One conversation.</h1>
+    <p id="welcomePolicy">Give me a task. I’ll carry it out and show what I did.</p>
+    <div class="suggestions">
+     <button type="button" data-prompt="Check the Pi’s health and tell me what needs attention.">Run a health check<small>Uptime, memory, disk, failed services</small></button>
+     <button type="button" data-prompt="Show what Docker containers are running and explain what each does.">What’s running?<small>Containers and what they do</small></button>
+     <button type="button" data-prompt="Check for pending system updates and tell me which are safe to apply.">Review updates<small>Pending packages, safe to apply</small></button>
+     <button type="button" data-prompt="Help me create a Python project in the workspace.">Build something new<small>Start a project in the workspace</small></button>
+    </div>
+   </section>
+   <div id="messages"></div>
+   <div id="activity"></div>
+  </div>
+
+  <form id="composer">
+   <div id="orb" class="orb" data-state="idle" aria-hidden="true"><i></i><i></i><i></i><b></b></div>
+   <textarea id="prompt" rows="1" placeholder="Ask Piko to do something…" aria-label="Your request" required></textarea>
+   <div class="composerFoot">
+    <small id="hint">Commands run only after your approval.</small>
+    <button id="stop" type="button" class="danger" hidden>Stop task</button>
+    <button id="liveVoice" type="button" class="quiet">◉ Live conversation</button>
+    <button id="liveMute" type="button" class="quiet" hidden>Mute mic</button>
+    <button id="voiceStop" type="button" class="quiet" hidden>Stop voice</button>
+    <button id="send">Send ↑</button>
+   </div>
+  </form>
+  <label>Optional task workspace for bounded file diffs <input id="auditWorkspace" placeholder="/home/user/piko-workspace/project" autocomplete="off"></label>
+  <div id="voiceConfirm" hidden role="status"><span>Do you want me to stop the task?</span> <button id="voiceConfirmYes" type="button">Yes, stop task</button> <button id="voiceConfirmNo" type="button">No, keep working</button></div>
+  <div class="voiceOptions">
+   <label><input id="autoVoice" type="checkbox" checked> Read new replies aloud</label>
+   <span id="voiceStatus" role="status" aria-live="polite">Text chat or live conversation · AI-generated voice</span>
+  </div>
+  <audio id="liveAudio" autoplay controls hidden></audio>
+  <div id="liveTranscript" class="transcript" role="status" aria-live="polite"></div>
+  <p id="error" class="error bottom" role="alert"></p>
+ </main>
+
+ <aside id="vitals" aria-label="Pi telemetry">
+  <div class="eyebrow">Your Pi at a glance</div>
+  <div class="gauges">
+   <div class="gauge" id="gCpu"><div class="ring"><strong>—</strong></div><small>CPU load</small></div>
+   <div class="gauge" id="gMem"><div class="ring"><strong>—</strong></div><small>Memory</small></div>
+   <div class="gauge" id="gDisk"><div class="ring"><strong>—</strong></div><small>Disk</small></div>
+  </div>
+  <div class="spark">
+   <div class="sparkHead"><span>Load · 1 min</span><b id="sparkNow">—</b></div>
+   <svg id="sparkline" viewBox="0 0 240 56" preserveAspectRatio="none" aria-hidden="true"></svg>
+  </div>
+  <dl class="facts">
+   <div><dt>Uptime</dt><dd id="vUptime">—</dd></div>
+   <div><dt>Tokens · 24h</dt><dd id="vTokens">—</dd></div>
+   <div><dt>Active tasks</dt><dd id="vActive">—</dd></div>
+   <div><dt>Devices online</dt><dd id="vDevices">—</dd></div>
+  </dl>
+  <p id="vitalsNote" class="quietText">Waiting for telemetry…</p>
+ </aside>
+</div>
+
+<dialog id="settings" aria-labelledby="settingsTitle">
+ <form id="settingsForm">
+  <div class="eyebrow">Connection</div>
+  <h2 id="settingsTitle">Connect OpenAI</h2>
+  <p>Your API key is saved privately on the Pi. Chats and approved tool results are sent to OpenAI to carry out your requests. API usage is billed to your OpenAI account.</p>
+  <label>OpenAI API key<input id="apiKey" type="password" placeholder="sk-…" autocomplete="off" required></label>
+  <label>Model<input id="model" value="gpt-6.1-sol" required></label>
+  <p id="settingsError" class="error"></p>
+  <div class="actions"><button id="settingsClose" type="button" class="quiet">Cancel</button><button id="saveSettings">Verify &amp; save</button></div>
+ </form>
+</dialog>
+
+<dialog id="metrics" aria-labelledby="metricsTitle">
+ <div class="metricsHeader"><div><div class="eyebrow">Live overview</div><h2 id="metricsTitle">Dashboard</h2></div><button id="metricsClose" class="quiet">Close</button></div>
+ <p id="metricsNote">Token usage is measured locally from this update. Voice billing and account-wide usage are separate.</p>
+ <div id="metricCards" class="metricCards"></div>
+ <div id="piMetrics" class="piMetrics"></div>
+ <h3>Usage by model</h3>
+ <div id="modelMetrics"></div>
+ <h3>Recent tasks</h3>
+ <div id="taskMetrics"></div>
+ <p id="metricsError" class="error"></p>
+</dialog>
+
+<dialog id="devices" aria-labelledby="devicesTitle">
+ <div class="metricsHeader"><div><div class="eyebrow">Home network</div><h2 id="devicesTitle">Your devices</h2></div><button id="devicesClose" class="quiet">Close</button></div>
+ <p>Tailscale connection status · Updated automatically. Device control is coming next.</p>
+ <div id="deviceSummary" class="badge"></div>
+ <svg id="deviceMap" viewBox="0 0 400 250" role="img" aria-label="Device map"></svg>
+ <div id="deviceList" class="deviceList"></div>
+ <p id="devicesChecked" class="quietText"></p>
+ <p id="devicesError" class="error"></p>
+</dialog>
+
+</body>
+</html>
+

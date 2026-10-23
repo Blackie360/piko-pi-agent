@@ -1,0 +1,43 @@
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/static/fonts/geist-regular.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/static/fonts/geist-medium.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/static/fonts/geist-semibold.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/static/fonts/geist-bold.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/static/fonts/instrument-serif-italic.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/static/fonts/instrument-serif-regular.ttf) format('truetype');
+}
+

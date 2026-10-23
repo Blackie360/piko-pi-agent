@@ -1,0 +1,28 @@
+[Unit]
+Description=Piko fail-closed webhook receiver
+After=network.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+LoadCredential=flaresend-token:/etc/piko-webhook/flaresend-token
+WorkingDirectory=/opt/piko-webhook
+ExecStart=/usr/bin/python3 /opt/piko-webhook/pi_receiver.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_INET
+MemoryMax=64M
+TasksMax=16
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
+
