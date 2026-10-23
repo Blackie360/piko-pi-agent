@@ -46,25 +46,21 @@ At first start, Piko creates a local `data/login-token`. Read that file **locall
 
 ## Optional WhatsApp
 
-WhatsApp is disabled by default. [WHATSAPP.md](WHATSAPP.md) contains the provider contract, receiver topology, credential setup, approval behavior and offline tests. Configure your own provider account and verify the delivery contract before enabling processing. Webhook ingress must never expose the dashboard API. Nothing in this repository configures or deploys a live account.
+WhatsApp is disabled by default. [WHATSAPP.md](WHATSAPP.md) contains public configuration guidance, approval behavior and integration limits. Configure your own provider account and verify the delivery contract before enabling processing. Webhook ingress must never expose the dashboard API. Nothing in this repository configures or deploys a live account.
 
-## Checks
+## Verification
 
-Tests use synthetic credentials and mocked provider/model calls; they must not use a real Pi, microphone or provider account.
+The test suite has been removed from the current branch at the maintainer's request. It remains recoverable from Git history and the immutable `v2.0.0` release. No automated CI is configured.
 
-```sh
-python -m unittest discover -p 'test_*.py' -v
-node --test public_receiver/webhook.test.js
-```
-
-Optional browser checks require Playwright and Chromium installed separately:
+You can check source syntax without starting the application:
 
 ```sh
-node test_ui.cjs
-node test_voice_control.cjs
+python -m compileall -q app.py command_audit.py conversation_context.py whatsapp.py whatsapp_media.py whatsapp_summary.py public_receiver/pi_receiver.py
+node --check static/app.js
+node --check public_receiver/api/webhook.js
 ```
 
-`PI_AGENT_PLAYWRIGHT_MODULE`, `PI_AGENT_CHROMIUM`, `PI_AGENT_SOURCE` and `PI_AGENT_QA_DIR` let you point these checks at existing local tools and artifact directories. Browser suites intercept network requests and use synthetic audio objects. Real-device audio, proxy setup and live messaging still need deployment-specific validation.
+Syntax checks are not runtime or integration tests. Validate HTTPS/authentication, command approvals, real-device audio and any messaging configuration in your own isolated deployment before use.
 
 ## Project layout
 
@@ -72,13 +68,12 @@ node test_voice_control.cjs
 - `command_audit.py`, `conversation_context.py`: local audit/history helpers
 - `static/`: no-build dashboard, fonts and icons
 - `whatsapp*.py`, `public_receiver/`: optional messaging integration
-- `test_*`: offline regression tests
 - `README.md`, `WHATSAPP.md`: the two project guides
 
 This release intentionally keeps the existing flat code structure; a package refactor is not included.
 
 ## Contributing and license
 
-Small, focused pull requests with offline tests are welcome. Do not include credentials, private hostnames, conversation exports or real webhook payloads. Experimental community project: no support SLA. For security concerns, avoid posting exploit details or secrets publicly; use GitHub's private vulnerability reporting when available.
+Small, focused pull requests with clear verification steps are welcome. Do not include credentials, private hostnames, conversation exports or real webhook payloads. Experimental community project: no support SLA. For security concerns, avoid posting exploit details or secrets publicly; use GitHub's private vulnerability reporting when available.
 
 Project code is licensed under [MIT](LICENSE). Bundled fonts retain their separate SIL Open Font License notices in `static/fonts/OFL-*.txt`.

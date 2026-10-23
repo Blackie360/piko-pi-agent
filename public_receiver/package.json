@@ -2,7 +2,7 @@
   "name": "piko-whatsapp-receiver",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test" },
-  "engines": { "node": "24.x" }
+  "engines": {
+    "node": "24.x"
+  }
 }
-

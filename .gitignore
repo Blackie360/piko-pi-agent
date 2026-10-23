@@ -19,11 +19,5 @@ venv/
 __pycache__/
 *.py[cod]
 node_modules/
-.pytest_cache/
-.coverage
-htmlcov/
-playwright-report/
-test-results/
-qa-output/
 *.log
 .DS_Store

@@ -18,16 +18,11 @@ WhatsApp tasks use the same command-safety model as the dashboard. Ordinary comm
 
 Replies and optional media use bounded output and delivery tracking. Failed, blocked or uncertain sends must not be treated as successful delivery. Do not automatically retry uncertain sends. File access is restricted by the media tool's checks, not a general operating-system sandbox.
 
-## Offline checks
+## Verification
 
-Use the virtual environment from the main README. Tests use synthetic identities and mocked model/provider calls; no real account is needed.
+Test files are not included on the current branch. The original offline suite remains in Git history and the immutable `v2.0.0` release. No live messaging validation is implied by source publication.
 
-```sh
-python -m unittest test_whatsapp test_whatsapp_app test_whatsapp_approvals test_whatsapp_conversation test_whatsapp_media test_whatsapp_summary test_provider_bridge test_pi_receiver -v
-node --test public_receiver/webhook.test.js
-```
-
-Browser-only voice tests are separate. These offline checks do not establish live provider delivery, Pi deployment readiness or real audio timing.
+Before enabling the optional adapter, validate its authentication, sender restrictions, approval behavior and provider compatibility in an isolated environment using synthetic input. Do not send real messages without authorization. See [README.md](README.md) for source-syntax checks and deployment limits.
 
 ## Source map
 
